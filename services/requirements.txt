@@ -1,0 +1,7 @@
+fastapi==0.115.4
+catboost==1.2.7
+scikit-learn==1.4.0
+cloudpickle==3.1.0
+uvicorn==0.32.0
+prometheus_fastapi_instrumentator==7.0.0
+requests==2.32.3

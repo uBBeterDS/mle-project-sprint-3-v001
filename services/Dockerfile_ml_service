@@ -1,0 +1,12 @@
+FROM python:3.10.12-slim
+
+COPY . ./ml_service
+WORKDIR /ml_service
+
+RUN pip3 install -r requirements.txt
+
+EXPOSE ${ML_SERVICE_PORT}
+
+VOLUME /models
+
+CMD uvicorn ml_service.app:app --reload --port ${ML_SERVICE_PORT} --host 0.0.0.0
