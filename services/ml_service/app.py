@@ -12,8 +12,9 @@ instrumentator.instrument(app).expose(app)
 ml_service_predictions = Histogram(
     "ml_service_predictions",
     "Histogram of predictions",
-    buckets = (10 ** 6, 2 * 10 ** 6, 5 * 10 ** 6, 10 * 10 ** 6, 25 * 10 ** 6)
+    buckets = (1e6, 2e6, 5e6, 1e7, 2.5e7)
 )
+
 
 ml_service_prediction_counter = Counter(
     "ml_service_prediction_counter",

@@ -1,5 +1,8 @@
 import pickle
 import pandas as pd
+import logging
+
+MODEL_PATH = "./models/model.pkl"
 
 class FastApiHandler:
 
@@ -10,7 +13,7 @@ class FastApiHandler:
             "model_params": dict
         }
 
-        self.model_path = "./models/model.pkl"
+        self.model_path = MODEL_PATH
         self.load_model(model_path=self.model_path)
 
         self.required_model_params = [
@@ -39,11 +42,16 @@ class FastApiHandler:
         Args:
             model_path (str): путь до модели
         """
-        # try:
-        with open(model_path, "rb") as model_file:
-            self.model = pickle.load(model_file)
-        # except Exception as e:
-        #     print(f'failed to load model: {e}')
+        try:
+            with open(model_path, "rb") as model_file:
+                self.model = pickle.load(model_file)
+                
+        except FileNotFoundError:
+            print(f'Model file not found: {model_path}')
+            raise
+        except pickle.UnpicklingError:
+            print('Failed to load model due to unpickling error')
+            raise
 
 
     def predict(self, model_params: dict) -> int:
@@ -60,8 +68,12 @@ class FastApiHandler:
 
         try:
             prediction = int(self.model.predict(param_values_list)[0])
+        except ValueError as e:
+            print(f'Value error during prediction: {e}')
+            raise
         except Exception as e:
             print(f'Failed to make prediction: {e}')
+            raise
         
         return prediction
     
@@ -136,28 +148,31 @@ class FastApiHandler:
             dict: Словарь, содержащий результат выполнения запроса.
         """
 
-        try:
+        if not self.validate_params(params):
+            logging.error("Validation failed for parameters: %s", params)
+            return {"Error": "Problem with parameters"}
 
-            if not self.validate_params(params):
-                print("Error while handling request")
-                response = {"Error": "Problem with parameters"}
-            else:
-                user_id = params["user_id"]
-                model_params = params["model_params"]
-                print(f"Predicting for model_params:\n{model_params}")
-
-                prediction = self.predict(model_params)
-                response = {
-                    "user_id": user_id,
-                    "prediction": prediction
-                }
-
-        except Exception as e:
-            print(f"Error while handling request: {e}")
-            return {"Error": "Problem with request"}
+        user_id = params["user_id"]
+        model_params = params["model_params"]
         
-        else:
-            return response
+        try:
+            prediction = self.predict(model_params)
+            return {
+                "user_id": user_id,
+                "prediction": prediction
+            }
+        
+        except ValueError as e:
+            logging.error("Value error during prediction: %s", e)
+            return {"Error": "Invalid values in model parameters"}
+        
+        except FileNotFoundError as e:
+            logging.error("Model file not found: %s", e)
+            return {"Error": "Model file not found"}
+        
+        except Exception as e:
+            logging.exception("Unexpected error while handling request: %s", e)
+            return {"Error": "Problem with request"}
         
 
 if __name__ == "__main__":

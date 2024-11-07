@@ -3,14 +3,31 @@ import time
 import json
 
 def convert_value(key, value):
-    if key in ['id', 'floor', 'rooms', 'build_year', 'building_type_int', 'flats_count', 'floors_total']:
-        return int(value)
-    elif key in ['is_apartment', 'studio', 'has_elevator']:
-        return value.lower() == 'true'
-    elif key in ['kitchen_area', 'living_area', 'total_area', 'price', 'ceiling_height', 'latitude', 'longitude']:
-        return float(value)
-    else:
-        return value
+    type_mapping = {
+        'id': int,
+        'floor': int,
+        'rooms': int,
+        'build_year': int,
+        'building_type_int': int,
+        'flats_count': int,
+        'floors_total': int,
+        'is_apartment': lambda x: x.lower() == 'true',
+        'studio': lambda x: x.lower() == 'true',
+        'has_elevator': lambda x: x.lower() == 'true',
+        'kitchen_area': float,
+        'living_area': float,
+        'total_area': float,
+        'price': float,
+        'ceiling_height': float,
+        'latitude': float,
+        'longitude': float,
+    }
+    
+    if key in type_mapping:
+        converter = type_mapping[key]
+        return converter(value) if not callable(converter) else converter(value)
+    
+    return value
 
 with open('simulate.csv', 'r') as file:
     model_param_keys = [x for x in file.readline().strip().split(',')]
